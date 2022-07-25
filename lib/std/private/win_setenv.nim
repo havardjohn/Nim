@@ -48,6 +48,7 @@ else:
       let envstring = name & "=" & value
       let e = c_wputenv(envstring.newWideCString)
       if e != 0:
+        echo "oof1"
         errno = EINVAL
         return -1
       return 0
@@ -59,6 +60,7 @@ else:
     ]#
     let envstring = name & "=  "
     if c_wputenv(newWideCString(envstring)) != 0:
+      echo "oof2"
       errno = EINVAL
       return -1
     # Here lies the documentation we blatently ignore to make this work.
@@ -82,11 +84,14 @@ else:
       # wcstombs returns (size_t) (-1) if any characters cannot be represented
       # in the current codepage. Skip updating MBCS environment in this case.
       let requiredSizeS = wcstombs(nil, wideName, 0)
+      echo "hey ", requiredSizeS
       if requiredSizeS != high(csize_t):
+        echo "hey2"
         let requiredSize = requiredSizeS.int
         var buf = newSeq[char](requiredSize + 1)
         let buf2 = buf[0].addr
         if wcstombs(buf2, wideName, csize_t(requiredSize + 1)) == csize_t(high(uint)):
+          echo "oof3"
           errno = EINVAL
           return -1
         var ptrToEnv = c_getenv(buf2)
