@@ -83,6 +83,8 @@ else:
 
       # wcstombs returns (size_t) (-1) if any characters cannot be represented
       # in the current codepage. Skip updating MBCS environment in this case.
+      # For some reason, second `wcstombs` can find non-convertible characters
+      # that the first call cannot.
       let requiredSizeS = wcstombs(nil, wideName, 0)
       echo "hey ", requiredSizeS
       if requiredSizeS != high(csize_t):
@@ -90,14 +92,12 @@ else:
         let requiredSize = requiredSizeS.int
         var buf = newSeq[char](requiredSize + 1)
         let buf2 = buf[0].addr
-        if wcstombs(buf2, wideName, csize_t(requiredSize + 1)) == csize_t(high(uint)):
-          echo "oof3"
-          errno = EINVAL
-          return -1
-        var ptrToEnv = c_getenv(buf2)
-        ptrToEnv[0] = '\0'
-        ptrToEnv = c_getenv(buf2)
-        ptrToEnv[1] = '='
+        if wcstombs(buf2, wideName, csize_t(requiredSize + 1)) != high(csize_t):
+          echo "hey3"
+          var ptrToEnv = c_getenv(buf2)
+          ptrToEnv[0] = '\0'
+          ptrToEnv = c_getenv(buf2)
+          ptrToEnv[1] = '='
 
     # And now, we have to update the outer environment to have a proper empty value.
     if setEnvironmentVariableW(wideName, value.newWideCString) == 0:
