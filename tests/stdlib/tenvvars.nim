@@ -132,13 +132,15 @@ when defined(windows):
     # raise an error.
     #
     # `win_setenv.nim` converts UTF-16 to ANSI when setting empty env. var. The
-    # Polish_Poland.1250 locale has no representation of `unicodeUtf8`, so the
+    # windows-1250 locale has no representation of `abreveUtf8` below, so the
     # conversion will fail, but this must not be fatal. It is expected that the
     # routine ignores updating MBCS environment (`environ` global) and carries
     # on.
     block:
-      const envName = unicodeUtf8 & "4"
-      discard setlocale(LC_ALL, cstring"Polish_Poland.1250")
+      const
+        # "LATIN SMALL LETTER A WITH BREVE" in UTF-8
+        abreveUtf8 = "\xc4\x83"
+        envName = abreveUtf8 & "4"
       putEnv(envName, "")
       doAssert existsEnv(envName)
       doAssert $c_wgetenv(envName.newWideCString) == ""
